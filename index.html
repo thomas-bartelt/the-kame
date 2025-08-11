@@ -309,6 +309,53 @@
             font-size: 12px; padding: 8px 16px; background: #4CAF50; color: white; border-radius: 20px;
           }
         }
+        /* === MOBILE: kill scroll, fit everything === */
+@media (max-width: 768px) {
+  html, body { height: 100%; overflow: hidden; overscroll-behavior: contain; }
+  body { margin: 0; padding: 0; }
+
+  /* main wrapper */
+  .game-container {
+    height: 100svh;           /* safe viewport height on iOS/Android */
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  /* the grid that holds the piles must be the flex "filler" */
+  .piles-container {
+    flex: 1 1 0;
+    min-height: 0;            /* allow shrinking to avoid overflow */
+    margin: 0;
+  }
+  .pile, .hand-container { min-height: 0; }
+
+  /* scale pile top cards so they never force scroll */
+  .pile-card {
+    width: clamp(40px, 14vw, 64px);
+    height: clamp(56px, 20vw, 88px);
+    font-size: clamp(16px, 6vw, 24px);
+    margin: 0 auto;
+  }
+
+  /* hand layout: compact 4-up grid */
+  .hand-cards {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 6px;
+    min-height: 0;
+  }
+
+  /* scale hand cards too */
+  .hand-card {
+    width: 100%;
+    aspect-ratio: 7 / 10;
+    height: auto;
+    font-size: clamp(14px, 5.2vw, 20px);
+    margin: 0;
+  }
+}
+
     </style>
 </head>
 <body>
