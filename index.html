@@ -1,0 +1,1003 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <title>The Game - Enhanced</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .game-container {
+    margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 1200px;
+            width: 100%;
+        }
+
+        .game-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .game-info {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+            padding: 15px;
+            background: #f0f0f0;
+            border-radius: 10px;
+            flex: 1;
+        }
+
+        .controls {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .toggle-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: #f0f0f0;
+            padding: 10px 15px;
+            border-radius: 10px;
+        }
+
+        .toggle-switch {
+            position: relative;
+            width: 50px;
+            height: 26px;
+        }
+
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 34px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 18px;
+            width: 18px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+
+        input:checked + .slider {
+            background-color: #4CAF50;
+        }
+
+        input:checked + .slider:before {
+            transform: translateX(24px);
+        }
+
+        .info-item {
+            font-size: 16px;
+            font-weight: bold;
+        }
+
+        .piles-container {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .pile {
+            background: #fff;
+            border: 3px solid #ddd;
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+            min-height: 200px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            transition: all 0.3s ease;
+        }
+
+        .pile.valid-target {
+            border-color: #4CAF50;
+            box-shadow: 0 0 20px rgba(76, 175, 80, 0.4);
+            transform: scale(1.05);
+        }
+
+        .pile.drag-over {
+            background: #e8f5e9;
+            transform: scale(1.08);
+        }
+
+        .pile-label {
+            position: absolute;
+            top: 10px;
+            font-size: 14px;
+            font-weight: bold;
+            color: #666;
+            display: none;
+        }
+
+        .pile-direction {
+            position: absolute;
+            top: 30px;
+            font-size: 24px;
+            display: none;
+        }
+
+        .pile-card {
+            width: 80px;
+            height: 110px;
+            background: #fff;
+            border: 2px solid #333;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 32px;
+            font-weight: bold;
+            margin-top: 20px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+            transition: all 0.3s ease;
+        }
+
+        @keyframes cardPlace {
+            0% { transform: scale(1.2) rotate(5deg); }
+            50% { transform: scale(1.1) rotate(-2deg); }
+            100% { transform: scale(1) rotate(0deg); }
+        }
+
+        .pile-card.new-card {
+            animation: cardPlace 0.4s ease-out;
+        }
+
+        .ascending {
+            background: #e8f5e9;
+        }
+
+        .descending {
+            background: #ffebee;
+        }
+
+        .hand-container {
+            background: #f5f5f5;
+            border-radius: 10px;
+            padding: 20px;
+            min-height: 150px;
+        }
+
+        .hand-label {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+
+        .hand-cards {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 10px;
+            min-height: 100px;
+        }
+
+        .hand-card {
+            width: 70px;
+            height: 100px;
+            background: #fff;
+            border: 2px solid #333;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            font-weight: bold;
+            cursor: grab;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+            position: relative;
+        }
+
+        .hand-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .hand-card.selected {
+            transform: translateY(-10px) scale(1.1);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
+            z-index: 10;
+        }
+
+        .hand-card.dragging {
+            opacity: 0.5;
+            cursor: grabbing;
+        }
+
+        .hand-card.playable {
+            box-shadow: 0 0 15px rgba(76, 175, 80, 0.6);
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(100px) rotate(10deg);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0) rotate(0);
+            }
+        }
+
+        .hand-card.new-card {
+            animation: slideIn 0.5s ease-out;
+        }
+
+        /* Pastel colors for different tens */
+        .hand-card[data-tens="0"], .pile-card[data-tens="0"] { background: #FFE4E1; }
+        .hand-card[data-tens="1"], .pile-card[data-tens="1"] { background: #E6E6FA; }
+        .hand-card[data-tens="2"], .pile-card[data-tens="2"] { background: #E0FFFF; }
+        .hand-card[data-tens="3"], .pile-card[data-tens="3"] { background: #F0FFF0; }
+        .hand-card[data-tens="4"], .pile-card[data-tens="4"] { background: #FFF8DC; }
+        .hand-card[data-tens="5"], .pile-card[data-tens="5"] { background: #FFE4B5; }
+        .hand-card[data-tens="6"], .pile-card[data-tens="6"] { background: #FFB6C1; }
+        .hand-card[data-tens="7"], .pile-card[data-tens="7"] { background: #DDA0DD; }
+        .hand-card[data-tens="8"], .pile-card[data-tens="8"] { background: #B0E0E6; }
+        .hand-card[data-tens="9"], .pile-card[data-tens="9"] { background: #98FB98; }
+        .hand-card[data-tens="10"], .pile-card[data-tens="10"] { background: #F5DEB3; }
+
+        .actions {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            margin-top: 20px;
+        }
+
+        button {
+            padding: 12px 30px;
+            font-size: 16px;
+            font-weight: bold;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .play-btn {
+            background: #4CAF50;
+            color: white;
+        }
+
+        .play-btn:hover:not(:disabled) {
+            background: #45a049;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .play-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        .restart-btn {
+            background: #ff9800;
+            color: white;
+        }
+
+        .restart-btn:hover {
+            background: #f57c00;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .new-game-btn {
+            background: #2196F3;
+            color: white;
+        }
+
+        .new-game-btn:hover {
+            background: #1976D2;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .game-over {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 10px 50px rgba(0, 0, 0, 0.5);
+            text-align: center;
+            z-index: 1000;
+        }
+
+        .game-over h2 {
+            font-size: 36px;
+            margin-bottom: 20px;
+        }
+
+        .win {
+            color: #4CAF50;
+        }
+
+        .lose {
+            color: #f44336;
+        }
+
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 999;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .save-indicator {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 30px;
+            opacity: 0;
+            transition: opacity 0.3s;
+            pointer-events: none;
+        }
+
+        /* Mobile Responsive Styles */
+        @media (max-width: 768px) {
+            body {
+                padding: 5px;
+                margin: 0;
+                background: #667eea;
+            }
+
+            .game-container {
+    margin: 0 auto;
+                padding: 10px;
+                border-radius: 10px;
+                background: white;
+                box-shadow: none;
+            }
+
+            .game-header {
+                display: block;
+                margin-bottom: 10px;
+            }
+
+            .game-info {
+                display: flex;
+                justify-content: space-around;
+                padding: 8px;
+                background: #f0f0f0;
+                border-radius: 5px;
+                font-size: 13px;
+            }
+
+            .info-item {
+                font-size: 13px;
+            }
+
+            .controls {
+                display: none;
+            }
+
+            .piles-container {
+                display: grid;
+                grid-template-columns: repeat(2, 1fr);
+                gap: 8px;
+                margin-bottom: 10px;
+            }
+
+            .pile {
+                height: 100px;
+                padding: 10px;
+            }
+
+            .pile-card {
+                width: 50px;
+                height: 70px;
+                font-size: 20px;
+                margin: 0 auto;
+            }
+
+            .hand-container {
+                padding: 10px;
+                background: #f5f5f5;
+                border-radius: 8px;
+                margin-bottom: 10px;
+            }
+
+            .hand-label {
+                font-size: 14px;
+                margin-bottom: 10px;
+                text-align: center;
+                font-weight: bold;
+            }
+
+            .hand-cards {
+                display: grid;
+                grid-template-columns: repeat(4, 1fr);
+                gap: 5px;
+            }
+
+            .hand-card {
+                width: 70px;
+                height: 90px;
+                font-size: 18px;
+                margin: 0 auto;
+            }
+
+            .hand-card.selected {
+                transform: scale(1.1);
+                box-shadow: 0 0 20px rgba(76, 175, 80, 0.8);
+                z-index: 10;
+            }
+
+            /* Remove ALL animations on mobile */
+            .hand-card.new-card {
+                animation: none !important;
+            }
+
+            .pile-card.new-card {
+                animation: none !important;
+            }
+
+            .actions {
+                display: flex;
+                gap: 10px;
+            }
+
+            button {
+                flex: 1;
+                padding: 14px;
+                font-size: 15px;
+                border-radius: 6px;
+            }
+
+            .game-over {
+                position: fixed;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                width: 85%;
+                padding: 30px 20px;
+                background: white;
+                border-radius: 15px;
+                box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+                text-align: center;
+                z-index: 1000;
+            }
+
+            .save-indicator {
+                position: fixed;
+                bottom: 20px;
+                right: 20px;
+                font-size: 12px;
+                padding: 8px 16px;
+                background: #4CAF50;
+                color: white;
+                border-radius: 20px;
+            }
+        }
+
+        /* Touch-friendly improvements */
+        @media (hover: none) {
+            .hand-card:active {
+                transform: translateY(-5px);
+                box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            }
+
+            .pile:active {
+                transform: scale(0.98);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <div class="game-header">
+            <div class="game-info">
+                <div class="info-item">Draw Pile: <span id="draw-count">90</span></div>
+                <div class="info-item">To Play: <span id="cards-to-play">2</span></div>
+                <div class="info-item">Played: <span id="cards-played">0</span></div>
+            </div>
+            <div class="controls">
+                <div class="toggle-container">
+                    <span>Show Hints</span>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="hints-toggle" onchange="toggleHints()">
+                        <span class="slider"></span>
+                    </label>
+                </div>
+            </div>
+        </div>
+
+        <div class="piles-container">
+            <div class="pile ascending" data-pile="0">
+                <span class="pile-label">Pile 1</span>
+                <span class="pile-direction">↑</span>
+                <div class="pile-card" data-tens="0">1</div>
+            </div>
+            <div class="pile ascending" data-pile="1">
+                <span class="pile-label">Pile 2</span>
+                <span class="pile-direction">↑</span>
+                <div class="pile-card" data-tens="0">1</div>
+            </div>
+            <div class="pile descending" data-pile="2">
+                <span class="pile-label">Pile 3</span>
+                <span class="pile-direction">↓</span>
+                <div class="pile-card" data-tens="10">100</div>
+            </div>
+            <div class="pile descending" data-pile="3">
+                <span class="pile-label">Pile 4</span>
+                <span class="pile-direction">↓</span>
+                <div class="pile-card" data-tens="10">100</div>
+            </div>
+        </div>
+
+        <div class="hand-container">
+            <div class="hand-label">Your Hand</div>
+            <div class="hand-cards" id="hand"></div>
+        </div>
+
+        <div class="actions">
+            <button class="play-btn" onclick="playCards()">End Turn</button>
+            <button class="new-game-btn" onclick="newGame()">New Game</button>
+        </div>
+    </div>
+
+    <div class="overlay hidden" id="overlay"></div>
+    <div class="game-over hidden" id="game-over">
+        <h2 id="game-over-message"></h2>
+        <button class="new-game-btn" onclick="newGame()">Play Again</button>
+    </div>
+
+    <div class="save-indicator" id="save-indicator">Game Saved</div>
+
+    <script>
+        let gameState = {
+            deck: [],
+            hand: [],
+            piles: [1, 1, 100, 100],
+            selectedCard: null,
+            cardsPlayedThisTurn: 0,
+            gameOver: false,
+            showHints: false,
+            draggedCard: null,
+            draggedIndex: null
+        };
+
+        function getTensDigit(number) {
+            if (number === 100) return 10;
+            return Math.floor(number / 10);
+        }
+
+        function initializeDeck() {
+            const deck = [];
+            for (let i = 2; i <= 99; i++) {
+                deck.push(i);
+            }
+            return shuffle(deck);
+        }
+
+        function shuffle(array) {
+            const newArray = [...array];
+            for (let i = newArray.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [newArray[i], newArray[j]] = [newArray[j], newArray[i]];
+            }
+            return newArray;
+        }
+
+        function drawCards(count) {
+            const drawn = [];
+            for (let i = 0; i < count && gameState.deck.length > 0; i++) {
+                drawn.push(gameState.deck.pop());
+            }
+            return drawn;
+        }
+
+        function canPlayCard(card, pileIndex) {
+            const currentValue = gameState.piles[pileIndex];
+            const isAscending = pileIndex < 2;
+            
+            if (isAscending) {
+                return card > currentValue || card === currentValue - 10;
+            } else {
+                return card < currentValue || card === currentValue + 10;
+            }
+        }
+
+        function hasValidMove() {
+            for (let card of gameState.hand) {
+                for (let i = 0; i < 4; i++) {
+                    if (canPlayCard(card, i)) {
+                        return true;
+                    }
+                }
+            }
+            return false;
+        }
+
+        function selectCard(index) {
+            const cardElements = document.querySelectorAll('.hand-card');
+            
+            if (gameState.selectedCard === index) {
+                gameState.selectedCard = null;
+                cardElements[index].classList.remove('selected');
+            } else {
+                if (gameState.selectedCard !== null) {
+                    cardElements[gameState.selectedCard].classList.remove('selected');
+                }
+                gameState.selectedCard = index;
+                cardElements[index].classList.add('selected');
+            }
+            
+            updateHints();
+        }
+
+        function selectPile(pileIndex) {
+            if (gameState.selectedCard === null) return;
+
+            const card = gameState.hand[gameState.selectedCard];
+            
+            if (!canPlayCard(card, pileIndex)) {
+                animateInvalidMove(pileIndex);
+                return;
+            }
+
+            playCardToPile(gameState.selectedCard, pileIndex);
+        }
+
+        function playCardToPile(cardIndex, pileIndex) {
+            const card = gameState.hand[cardIndex];
+            gameState.piles[pileIndex] = card;
+            gameState.hand.splice(cardIndex, 1);
+            gameState.cardsPlayedThisTurn++;
+            gameState.selectedCard = null;
+
+            // Animate pile card update
+            const pileCard = document.querySelectorAll('.pile')[pileIndex].querySelector('.pile-card');
+            pileCard.classList.add('new-card');
+            setTimeout(() => pileCard.classList.remove('new-card'), 400);
+
+            updateDisplay();
+            saveGame();
+        }
+
+        function animateInvalidMove(pileIndex) {
+            const pile = document.querySelectorAll('.pile')[pileIndex];
+            pile.style.animation = 'shake 0.5s';
+            setTimeout(() => pile.style.animation = '', 500);
+        }
+
+        function playCards() {
+            const minCards = gameState.deck.length > 0 ? 2 : 1;
+            
+            if (gameState.cardsPlayedThisTurn < minCards) {
+                alert(`You must play at least ${minCards} card(s) this turn!`);
+                return;
+            }
+
+            const cardsToDraw = 8 - gameState.hand.length;
+            const drawnCards = drawCards(cardsToDraw);
+            
+            // Add new cards with animation
+            gameState.hand.push(...drawnCards);
+            gameState.hand.sort((a, b) => a - b);
+
+            gameState.cardsPlayedThisTurn = 0;
+
+            if (gameState.hand.length === 0 && gameState.deck.length === 0) {
+                endGame(true);
+            } else if (!hasValidMove()) {
+                endGame(false);
+            }
+
+            updateDisplay(true);
+            saveGame();
+        }
+
+        function endGame(won) {
+            gameState.gameOver = true;
+            localStorage.removeItem('theGameSave');
+            document.getElementById('overlay').classList.remove('hidden');
+            document.getElementById('game-over').classList.remove('hidden');
+            const message = document.getElementById('game-over-message');
+            if (won) {
+                message.textContent = 'Congratulations! You Won!';
+                message.className = 'win';
+            } else {
+                message.textContent = 'Game Over - No Valid Moves!';
+                message.className = 'lose';
+            }
+        }
+
+        function toggleHints() {
+            gameState.showHints = document.getElementById('hints-toggle').checked;
+            updateHints();
+            saveGame();
+        }
+
+        function updateHints() {
+            const piles = document.querySelectorAll('.pile');
+            const cards = document.querySelectorAll('.hand-card');
+            
+            // Remove all hints
+            piles.forEach(pile => pile.classList.remove('valid-target'));
+            cards.forEach(card => card.classList.remove('playable'));
+            
+            if (!gameState.showHints) return;
+            
+            // Show valid piles for selected card
+            if (gameState.selectedCard !== null) {
+                const card = gameState.hand[gameState.selectedCard];
+                piles.forEach((pile, index) => {
+                    if (canPlayCard(card, index)) {
+                        pile.classList.add('valid-target');
+                    }
+                });
+            } else {
+                // Show playable cards
+                gameState.hand.forEach((card, index) => {
+                    for (let i = 0; i < 4; i++) {
+                        if (canPlayCard(card, i)) {
+                            cards[index].classList.add('playable');
+                            break;
+                        }
+                    }
+                });
+            }
+        }
+
+        function setupDragAndDrop() {
+            const handContainer = document.getElementById('hand');
+            
+            handContainer.addEventListener('dragstart', (e) => {
+                if (e.target.classList.contains('hand-card')) {
+                    const index = Array.from(handContainer.children).indexOf(e.target);
+                    gameState.draggedCard = gameState.hand[index];
+                    gameState.draggedIndex = index;
+                    e.target.classList.add('dragging');
+                    e.dataTransfer.effectAllowed = 'move';
+                    
+                    // Update hints for dragged card
+                    gameState.selectedCard = index;
+                    updateHints();
+                }
+            });
+            
+            handContainer.addEventListener('dragend', (e) => {
+                if (e.target.classList.contains('hand-card')) {
+                    e.target.classList.remove('dragging');
+                    gameState.draggedCard = null;
+                    gameState.draggedIndex = null;
+                    gameState.selectedCard = null;
+                    updateHints();
+                }
+            });
+            
+            document.querySelectorAll('.pile').forEach((pile, pileIndex) => {
+                pile.addEventListener('dragover', (e) => {
+                    e.preventDefault();
+                    if (gameState.draggedCard !== null && canPlayCard(gameState.draggedCard, pileIndex)) {
+                        e.dataTransfer.dropEffect = 'move';
+                        pile.classList.add('drag-over');
+                    }
+                });
+                
+                pile.addEventListener('dragleave', (e) => {
+                    pile.classList.remove('drag-over');
+                });
+                
+                pile.addEventListener('drop', (e) => {
+                    e.preventDefault();
+                    pile.classList.remove('drag-over');
+                    
+                    if (gameState.draggedCard !== null && canPlayCard(gameState.draggedCard, pileIndex)) {
+                        playCardToPile(gameState.draggedIndex, pileIndex);
+                    }
+                });
+            });
+        }
+
+        function updateDisplay(withAnimation = false) {
+            document.getElementById('draw-count').textContent = gameState.deck.length;
+            
+            const minCards = gameState.deck.length > 0 ? 2 : 1;
+            document.getElementById('cards-to-play').textContent = 
+                Math.max(0, minCards - gameState.cardsPlayedThisTurn);
+            
+            document.getElementById('cards-played').textContent = gameState.cardsPlayedThisTurn;
+
+            // Update piles
+            const piles = document.querySelectorAll('.pile');
+            piles.forEach((pile, index) => {
+                const pileCard = pile.querySelector('.pile-card');
+                pileCard.textContent = gameState.piles[index];
+                pileCard.setAttribute('data-tens', getTensDigit(gameState.piles[index]));
+                pile.onclick = () => selectPile(index);
+            });
+
+            // Update hand - SIMPLIFIED VERSION
+            const handContainer = document.getElementById('hand');
+            handContainer.innerHTML = ''; // Clear existing cards
+            
+            // Make absolutely sure we render the cards
+            if (gameState.hand && gameState.hand.length > 0) {
+                gameState.hand.forEach((card, index) => {
+                    const cardEl = document.createElement('div');
+                    cardEl.className = 'hand-card';
+                    cardEl.textContent = card;
+                    cardEl.setAttribute('data-tens', getTensDigit(card));
+                    cardEl.onclick = () => selectCard(index);
+                    
+                    // Disable animations on mobile
+                    if (window.innerWidth <= 768) {
+                        cardEl.draggable = false;
+                    } else {
+                        cardEl.draggable = true;
+                        if (withAnimation && index >= handContainer.children.length) {
+                            cardEl.classList.add('new-card');
+                        }
+                    }
+                    
+                    handContainer.appendChild(cardEl);
+                });
+            } else {
+                // Debug: show message if no cards
+                handContainer.innerHTML = '<div style="padding: 20px; color: red;">No cards in hand!</div>';
+            }
+
+            // Only setup drag and drop on desktop
+            if (window.innerWidth > 768) {
+                setupDragAndDrop();
+            }
+
+            // Update play button
+            const playBtn = document.querySelector('.play-btn');
+            const minCardsNeeded = gameState.deck.length > 0 ? 2 : 1;
+            playBtn.disabled = gameState.cardsPlayedThisTurn < minCardsNeeded;
+
+            // Update hints only on desktop
+            if (window.innerWidth > 768) {
+                const hintsToggle = document.getElementById('hints-toggle');
+                if (hintsToggle) {
+                    hintsToggle.checked = gameState.showHints;
+                    updateHints();
+                }
+            }
+        }
+
+        function saveGame() {
+            if (!gameState.gameOver) {
+                localStorage.setItem('theGameSave', JSON.stringify(gameState));
+                showSaveIndicator();
+            }
+        }
+
+        function loadGame() {
+            const saved = localStorage.getItem('theGameSave');
+            if (saved) {
+                gameState = JSON.parse(saved);
+                return true;
+            }
+            return false;
+        }
+
+        function showSaveIndicator() {
+            const indicator = document.getElementById('save-indicator');
+            indicator.classList.add('show');
+            setTimeout(() => indicator.classList.remove('show'), 2000);
+        }
+
+        function restartGame() {
+            if (confirm('Are you sure you want to restart? Your current progress will be lost.')) {
+                localStorage.removeItem('theGameSave');
+                newGame();
+            }
+        }
+
+        function newGame() {
+            const hasExistingGame = localStorage.getItem('theGameSave');
+            if (hasExistingGame && !gameState.gameOver) {
+                if (!confirm('Are you sure you want to start a new game? Your current progress will be lost.')) {
+                    return;
+                }
+            }
+            
+            localStorage.removeItem('theGameSave');
+            
+            gameState = {
+                deck: initializeDeck(),
+                hand: [],
+                piles: [1, 1, 100, 100],
+                selectedCard: null,
+                cardsPlayedThisTurn: 0,
+                gameOver: false,
+                showHints: false,
+                draggedCard: null,
+                draggedIndex: null
+            };
+
+            gameState.hand = drawCards(8);
+            gameState.hand.sort((a, b) => a - b);
+
+            document.getElementById('overlay').classList.add('hidden');
+            document.getElementById('game-over').classList.add('hidden');
+
+            updateDisplay();
+            saveGame();
+        }
+
+        // Add shake animation
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes shake {
+                0%, 100% { transform: translateX(0); }
+                25% { transform: translateX(-10px); }
+                75% { transform: translateX(10px); }
+            }
+        `;
+        document.head.appendChild(style);
+
+        // Initialize game
+        if (!loadGame()) {
+            newGame();
+        } else {
+            updateDisplay();
+        }
+    </script>
+</body>
+</html>
