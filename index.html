@@ -351,9 +351,115 @@
     window.addEventListener('resize', ()=>{ setTimeout(updateDisplay, 100); });
     if(!loadGame()) newGame(); else updateDisplay();
   </script>
+
+<!-- DRAW-ANIMATION-FIX: begin -->
+<script>
+(function(){
+  try {
+    if (!window.gameState) window.gameState = {};
+    if (!('lastDrawn' in window.gameState)) window.gameState.lastDrawn = [];
+  } catch(e) {}
+
+  const __orig_playCards__ = typeof playCards === "function" ? playCards : null;
+  function playCards_fixed(){
+    const minCards = gameState.deck.length > 0 ? 2 : 1;
+    if (gameState.cardsPlayedThisTurn < minCards) {
+      alert(`You must play at least ${minCards} card(s) this turn!`);
+      return;
+    }
+    const cardsToDraw = 8 - gameState.hand.length;
+    const drawn = (typeof drawCards === "function") ? drawCards(cardsToDraw) : [];
+    const prevHand = gameState.hand.length;
+    gameState.lastDrawn = Array.isArray(drawn) ? drawn.slice() : [];
+    gameState.hand.push(...drawn);
+    gameState.hand.sort((a, b) => a - b);
+    gameState.cardsPlayedThisTurn = 0;
+    gameState.turnMoves = [];
+    if (gameState.hand.length === 0 && gameState.deck.length === 0) {
+      endGame(true);
+    } else if (typeof hasValidMove === "function" && !hasValidMove()) {
+      endGame(false);
+    }
+    updateDisplay(true, prevHand);
+    if (typeof saveGame === "function") saveGame();
+  }
+
+  const __orig_updateDisplay__ = typeof updateDisplay === "function" ? updateDisplay : null;
+  function updateDisplay_fixed(withAnimation = false, previousHandSize = 0) {
+    try {
+      const drawEl = document.getElementById('draw-count');
+      if (drawEl) drawEl.textContent = gameState.deck.length;
+      const minCards = gameState.deck.length > 0 ? 2 : 1;
+      const toPlayEl = document.getElementById('cards-to-play');
+      if (toPlayEl) toPlayEl.textContent = Math.max(0, minCards - gameState.cardsPlayedThisTurn);
+      const playedEl = document.getElementById('cards-played');
+      if (playedEl) playedEl.textContent = gameState.cardsPlayedThisTurn;
+
+      const piles = document.querySelectorAll('.pile');
+      piles.forEach((pile, index) => {
+        const pileCard = pile.querySelector('.pile-card') || pile;
+        if (pileCard) {
+          pileCard.textContent = gameState.piles[index];
+          if (typeof getTensDigit === "function") {
+            pileCard.setAttribute('data-tens', getTensDigit(gameState.piles[index]));
+          }
+        }
+        pile.onclick = () => (typeof selectPile === "function") ? selectPile(index) : void 0;
+      });
+
+      const handContainer = document.getElementById('hand');
+      if (handContainer) {
+        handContainer.innerHTML = '';
+        const drawnSet = new Set(Array.isArray(gameState.lastDrawn) ? gameState.lastDrawn : []);
+        if (Array.isArray(gameState.hand) && gameState.hand.length > 0) {
+          gameState.hand.forEach((card, index) => {
+            const el = document.createElement('div');
+            el.className = 'hand-card';
+            el.textContent = card;
+            if (typeof getTensDigit === "function") {
+              el.setAttribute('data-tens', getTensDigit(card));
+            }
+            el.onclick = () => (typeof selectCard === "function") ? selectCard(index) : void 0;
+            el.draggable = true;
+            if (withAnimation && drawnSet.has(card)) {
+              el.classList.add('new-card');
+              setTimeout(() => el.classList.remove('new-card'), 600);
+            }
+            handContainer.appendChild(el);
+          });
+        }
+      }
+
+      if (typeof setupDragAndDrop === "function") setupDragAndDrop();
+      const playBtn = document.querySelector('.play-btn');
+      const undoBtn = document.querySelector('.undo-btn');
+      const minNeeded = gameState.deck.length > 0 ? 2 : 1;
+      if (playBtn) playBtn.disabled = gameState.cardsPlayedThisTurn < minNeeded;
+      if (undoBtn) undoBtn.disabled = gameState.turnMoves.length === 0;
+
+      if (window.innerWidth > 768) {
+        const hintsToggle = document.getElementById('hints-toggle');
+        if (hintsToggle) { hintsToggle.checked = gameState.showHints; if (typeof updateHints === "function") updateHints(); }
+      }
+      gameState.lastDrawn = [];
+    } catch (e) {
+      if (__orig_updateDisplay__) return __orig_updateDisplay__(withAnimation, previousHandSize);
+      throw e;
+    }
+  }
+
+  window.playCards = playCards_fixed;
+  window.updateDisplay = updateDisplay_fixed;
+
+  const __orig_newGame__ = typeof newGame === "function" ? newGame : null;
+  if (__orig_newGame__) {
+    window.newGame = function(){
+      __orig_newGame__.apply(this, arguments);
+      try { gameState.lastDrawn = []; } catch(e) {}
+    }
+  }
+})();
+</script>
+<!-- DRAW-ANIMATION-FIX: end -->
 </body>
 </html>
-
-
-
-
