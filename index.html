@@ -400,11 +400,11 @@
     <div class="difficulty-options">
       <button class="difficulty-btn easy" onclick="startGame('easy')">
         <span class="title">Easy</span>
-        <span class="description">Cards are grouped in ranges - more predictable draws</span>
+        <span class="description">Mixed ranges - starts predictable, gets more challenging</span>
       </button>
       <button class="difficulty-btn medium" onclick="startGame('medium')">
         <span class="title">Medium</span>
-        <span class="description">Weighted draws favor cards closer to current pile values</span>
+        <span class="description">Weighted draws favor playable cards and special -10/+10 moves</span>
       </button>
       <button class="difficulty-btn hard" onclick="startGame('hard')">
         <span class="title">Hard</span>
@@ -454,15 +454,13 @@
     }
     
     function shuffleEasy(deck) {
-      // Group cards into ranges and shuffle within each range
+      // Mixed range sizes: small at extremes, medium for transitions, large in middle
       const ranges = [
-        deck.filter(card => card >= 2 && card <= 15),
-        deck.filter(card => card >= 16 && card <= 30),
-        deck.filter(card => card >= 31 && card <= 45),
-        deck.filter(card => card >= 46 && card <= 60),
-        deck.filter(card => card >= 61 && card <= 75),
-        deck.filter(card => card >= 76 && card <= 89),
-        deck.filter(card => card >= 90 && card <= 99)
+        deck.filter(card => card >= 2 && card <= 12),   // Small: near pile 1 (11 cards)
+        deck.filter(card => card >= 13 && card <= 35),  // Medium: transition (23 cards)
+        deck.filter(card => card >= 36 && card <= 64),  // Large: chaos zone (29 cards)
+        deck.filter(card => card >= 65 && card <= 87),  // Medium: transition (23 cards)
+        deck.filter(card => card >= 88 && card <= 99)   // Small: near pile 100 (12 cards)
       ];
       
       // Shuffle within each range
@@ -473,7 +471,8 @@
         }
       });
       
-      // Combine ranges back together
+      // Combine ranges in strategic order: small→medium→large→medium→small
+      // This creates a natural difficulty progression through the deck
       return ranges.flat();
     }
     
@@ -483,17 +482,30 @@
       // Get current pile values
       const pileValues = gameState.piles.slice();
       
-      // Create weights for each card based on distance to pile values
+      // Create weights for each card based on distance to pile values and special moves
       const cardWeights = gameState.deck.map(card => {
         let minDistance = Infinity;
+        let hasSpecialMove = false;
         
         pileValues.forEach(pileValue => {
           const distance = Math.abs(card - pileValue);
           minDistance = Math.min(minDistance, distance);
+          
+          // Check if this card enables a -10/+10 special move
+          if (card === pileValue - 10 || card === pileValue + 10) {
+            hasSpecialMove = true;
+          }
         });
         
-        // Closer cards get higher weights (inverse of distance + 1)
-        return { card, weight: 1 / (minDistance + 1) };
+        // Base weight from distance (closer cards get higher weights)
+        let weight = 1 / (minDistance + 1);
+        
+        // Boost weight significantly for cards that enable special moves
+        if (hasSpecialMove) {
+          weight *= 3; // Triple the weight for special move cards
+        }
+        
+        return { card, weight };
       });
       
       // Sort by weight (highest first) and add some randomness
