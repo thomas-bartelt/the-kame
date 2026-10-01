@@ -2,6 +2,7 @@ import '@fontsource-variable/bricolage-grotesque/standard.css';
 import '@fontsource-variable/jetbrains-mono/index.css';
 import './styles/tokens.css';
 import './styles/app.css';
+import './styles/cards.css';
 
 import { registerSW } from 'virtual:pwa-register';
 import {

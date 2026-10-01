@@ -24,6 +24,21 @@ export interface BoardHandlers {
 const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)');
 const DRAG_THRESHOLD = 6;
 
+/**
+ * Give a card its value and its "ten": 2-9 is ten 0, 90-99 is ten 9. Each ten has
+ * its own colour and motif (see cards.css). The starting 1 and 100 have none.
+ */
+function paint(el: HTMLElement, value: number): void {
+  el.style.setProperty('--v', String(value));
+  if (value >= 2 && value <= 99) {
+    const ten = Math.floor(value / 10);
+    el.dataset.ten = String(ten);
+    el.style.setProperty('--t', String(ten));
+  } else {
+    delete el.dataset.ten;
+  }
+}
+
 function cardMarkup(value: number): string {
   return `<span class="card__num">${value}</span><span class="card__gauge" aria-hidden="true"></span>`;
 }
@@ -127,7 +142,7 @@ export class Board {
     this.piles.forEach((pile, i) => {
       const v = state.piles[i];
       const card = pile.querySelector<HTMLElement>('.card')!;
-      card.style.setProperty('--v', String(v));
+      paint(card, v);
       card.querySelector('.card__num')!.textContent = String(v);
       pile.dataset.fresh = String(v === PILES[i].start);
       const target = targets.includes(i);
@@ -164,7 +179,7 @@ export class Board {
         el.type = 'button';
         el.className = 'card';
         el.dataset.card = String(v);
-        el.style.setProperty('--v', String(v));
+        paint(el, v);
         el.innerHTML = cardMarkup(v);
         this.handCards.set(v, el);
         if (view.dealt.has(v)) {
@@ -266,7 +281,7 @@ export class Board {
   private makeFloating(card: number, rect: DOMRect): HTMLElement {
     const clone = document.createElement('div');
     clone.className = 'card';
-    clone.style.setProperty('--v', String(card));
+    paint(clone, card);
     clone.style.width = `${rect.width}px`;
     clone.style.setProperty('--w', `${rect.width}px`);
     clone.style.transformOrigin = '0 0';
